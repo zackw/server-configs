@@ -1,0 +1,54 @@
+#! /bin/sh
+
+srcdir="${0%/*}"
+if [ -z "$srcdir" ]; then
+    srcdir="."
+fi
+srcdir="$(cd $srcdir && pwd)/"
+commondir="${srcdir}common"
+
+usage () {
+    echo "usage: $0 server-type" >&2
+    echo "  supported server types:" >&2
+    for stype in "$srcdir"*; do
+        if [ -d "$stype" ] && [ "$stype" != "$commondir" ]; then
+            echo "    ${stype#$srcdir}" >&2
+        fi
+    done
+    exit $1
+}
+
+if [ $# -ne 1 ]; then
+    usage 1
+fi
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    usage 0
+fi
+if [ ! -d "${srcdir}$1" ]; then
+    usage 1
+fi
+stypedir="${srcdir}$1"
+
+common_sh="$commondir/prepare.sh"
+if [ ! -f "$common_sh" ]; then
+    echo "$0: internal error: $common_sh missing" >&2
+    exit 1
+fi
+
+stype_sh="$stypedir/prepare.sh"
+if [ ! -f "$stype_sh" ]; then
+    echo "$0: internal error: $stype_sh missing" >&2
+    exit 1
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "$0: error: must be run as root" >&2
+    exit 1
+fi
+
+workdir="$(pwd)"
+cd /
+
+sh -xe "$common_sh" "$commondir" "$workdir" || exit 1
+sh -xe "$stype_sh" "$stypedir" "$workdir" || exit 1
+exit 0
