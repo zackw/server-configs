@@ -51,4 +51,5 @@ cd /
 
 sh -xe "$common_sh" "$commondir" "$workdir" || exit 1
 sh -xe "$stype_sh" "$stypedir" "$workdir" || exit 1
+reboot
 exit 0
